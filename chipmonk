@@ -23,7 +23,7 @@ function clean_up()
   pkill upslog
 }
 
-set_perms()
+function set_perms()
 {
   if [ $(whoami) == "root" ]; then
     echo "Fixing permissions for first run..."
@@ -41,7 +41,7 @@ set_perms()
   fi
 }
 
-startup()
+function startup()
 {
   echo "Starting dialogs for $model"
   echo "Checking if permissions are correct for functionality"
