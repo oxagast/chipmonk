@@ -63,7 +63,7 @@ startup()
 function log_ups()
 {
   echo "Starting detailed logger: /var/log/ups.log"
-  upslog -l /var/log/ups.log -s $model || echo "Logging couldn't be established?"
+  upslog -l /var/log/ups.log -s $model -f "%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%" || echo "Logging couldn't be established?"
 }
 
 function syslog_popup()
