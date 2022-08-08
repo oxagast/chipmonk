@@ -2,6 +2,7 @@
 
 # # # Chipmonk
 # # # Author: Marshall Whittaker / oxagast
+# # # Version: 1.1
 # # # NUT (Network UPS Tools) Visual Power Dialog
 
 function playball()
@@ -62,7 +63,7 @@ startup()
 function log_ups()
 {
   echo "Starting detailed logger: /var/log/ups.log"
-  upslog -l /var/log/ups.log -s $model
+  upslog -l /var/log/ups.log -s $model || echo "Logging couldn't be established?"
 }
 
 function syslog_popup()
@@ -83,7 +84,7 @@ function syslog_popup()
 }
 
 if [[ "$#" -ne 1 ]]; then
-  echo "You need to specify the configured UPS model name and hostname like: "
+  echo "You need to specify the NUT configured UPS model@hostname: "
   echo "    ./chipmonk.sh SK600@jerkon"
   exit
 else
@@ -92,5 +93,8 @@ else
   echo "Author: Marshall Whittaker / oxagast"
   echo
   model=$1
-  startup
+  if [ $(echo $model | grep  ".@."| wc -l) -gt 0 ]; then
+    startup
+  else echo "Incorrect model@hostname syntax"
+  fi
 fi
