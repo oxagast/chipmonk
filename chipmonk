@@ -21,7 +21,7 @@ function clean_up()
 function set_perms()
 {
   read -p "Would you like to give /usr/bin/upslog sgid nut? Warning! This is a potential security risk. " -n 1 -r
-  echo # (optional) move to a new line
+  echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
   fi
