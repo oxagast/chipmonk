@@ -9,9 +9,7 @@ function playball()
 {
   trap clean_up EXIT
   log_ups
-  echo "Logging UPS power details to /var/log/ups.log"
   syslog_popup
-  echo "Monitoring syslog for UPS state changes"
 }
 
 function clean_up()
@@ -34,8 +32,10 @@ function set_perms()
     chmod g+s /usr/bin/upslog
     echo "Setup Complete!"
     echo "Now run me as your own user!"
+    exit 0
   else
     echo "You need to be root to change /usr/bin/upslog perms, sorry!"
+    exit 1
   fi
 }
 
@@ -48,13 +48,8 @@ function startup()
   chmod g+rw /var/log/ups.log
   chown root:nut /var/log/ups.log
   if [[ $(stat -L -c "%A" /usr/bin/upslog | cut -c 7) == "s" ]]; then
-    if [[ $(stat -L -c "%A" /var/log/ups.log | cut -c 6) == "w" ]]; then
-      if [[ $(stat -c "%G" /usr/bin/upslog) == "nut" ]]; then
-        if [[ $(stat -c "%G" /var/log/ups.log) == "nut" ]]; then
-          playball
-        fi
-
-      fi
+    if [[ $(stat -c "%G" /usr/bin/upslog) == "nut" ]]; then
+      playball
     fi
     echo "Sorry, UPS logging facility couldn't be set up properly..."
     syslog_popup
@@ -65,8 +60,8 @@ function startup()
 
 function log_ups()
 {
-  if [ $(stat -c "%A" /var/log/ups.log | cut -c -6) == "w" ]; then
-    if [ $(stat -c "%G" /var/log/ups.log) == "nut" ]; then
+  if [[ $(stat -c "%A" /var/log/ups.log | cut -c 6) == "w" ]]; then
+    if [[ $(stat -c "%G" /var/log/ups.log) == "nut" ]]; then
       echo "Starting detailed logger: /var/log/ups.log"
       upslog -l /var/log/ups.log -s $model -f "%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%" || echo "Logging couldn't be established?"
     fi
@@ -78,6 +73,7 @@ function syslog_popup()
   f="/var/log/syslog"
   curr=$(<"$f")
   inotifywait -m -e modify "$f" --format "%e" | while read -r event 2>/dev/null; do
+    echo "Monitoring syslog for UPS state changes"
     if [ "$event" == "MODIFY" ]; then
       prev="$curr"
       curr=$(cat "$f" | tail -n 1)
@@ -99,7 +95,7 @@ logperm=2
 if [[ "$#" -gt 1 ]]; then
   echo "You need to specify the NUT configured UPS model@hostname: "
   echo "    ./chipmonk.sh SK600@jerkon"
-  exit
+  exit 1
 fi
 if [[ "$#" -eq 0 ]]; then
   model=$(grep "[MODEL]" -A 1 ~/.chipmonk | tail -n 1 | tr -d '\n')
@@ -117,4 +113,5 @@ else
   fi
   echo "You need to specify the NUT configured UPS model@hostname: "
   echo "    ./chipmonk.sh SK600@jerkon"
+  exit 1
 fi
