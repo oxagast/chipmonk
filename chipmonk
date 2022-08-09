@@ -5,6 +5,7 @@
 # # # Version: 1.1
 # # # NUT (Network UPS Tools) Visual Power Dialog
 
+
 function playball()
 {
   trap clean_up EXIT
@@ -25,12 +26,14 @@ function clean_up()
 
 function set_perms()
 {
+read -p "Would you like to give /usr/bin/upslog sgid nut? Warning! This is a potential security risk. " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
   if [ $(whoami) == "root" ]; then
     echo "Fixing permissions for first run..."
-    echo "Adding /var/log/ups.log"
-    touch /var/log/ups.log
-    chown root:nut /var/log/ups.log
-    chmod g+rw /var/log/ups.log
     echo "Setting group permissions on /usr/bin/upslog"
     chown root:nut /usr/bin/upslog
     chmod g+s /usr/bin/upslog
@@ -44,26 +47,39 @@ function set_perms()
 function startup()
 {
   echo "Starting dialogs for $model"
-  echo "Checking if permissions are correct for functionality"
+  echo "Checking upslog permissions"
   ls -al /usr/bin/upslog /var/log/ups.log
-  if [ $(stat -L -c "%A" /usr/bin/upslog | cut -c 7) == "s" ]; then
-    if [ $(stat -L -c "%A" /var/log/ups.log | cut -c 6) == "w" ]; then
-      if [ $(stat -c "%G" /usr/bin/upslog) == "nut" ]; then
-        if [ $(stat -c "%G" /var/log/ups.log) == "nut" ]; then
-          playball
+  touch /var/log/ups.log
+  chmod g+rw /var/log/ups.log
+  chown root:nut /var/log/ups.log
+  if [[ $(stat -L -c "%A" /usr/bin/upslog | cut -c 7) == "s" ]]; then
+    if [[ $(stat -L -c "%A" /var/log/ups.log | cut -c 6) == "w" ]]; then
+      if [[ $(stat -c "%G" /usr/bin/upslog) == "nut" ]]; then
+        if [[ $(stat -c "%G" /var/log/ups.log) == "nut" ]]; then
 
+          playball
         fi
+
       fi
     fi
+  echo "Sorry, UPS logging facility couldn't be set up properly..."
+  syslog_popup;
   else
+
     set_perms
   fi
 }
 
 function log_ups()
 {
+  echo "Checking /var/log/ups.log permissions!"
+  if [ $(stat -c "%A" /var/log/ups.log | cut -c -6) == "w" ]; then
+  if [ $(stat -c "%G" /var/log/ups.log) == "nut" ]; then
+
   echo "Starting detailed logger: /var/log/ups.log"
   upslog -l /var/log/ups.log -s $model -f "%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%" || echo "Logging couldn't be established?"
+  fi
+fi
 }
 
 function syslog_popup()
@@ -76,9 +92,11 @@ function syslog_popup()
       curr=$(cat "$f" | tail -n 1)
       [ "$curr" == "$prev" ] || if [ $(echo $curr | grep ": " | wc -l) -gt 0 ]; then
         powerline=$(echo $curr | grep $model | sed -e 's/.*UPS/UPS/')
-        echo "$powerline" | xargs -I {X} kdialog --passivepopup {X} 30 2>&1 >/dev/null
+        export DISPLAY=:0
+        echod "$powerline" | xargs -I {X} kdialog --passivepopup {X} 30 2>&1 >/dev/null
         echo $powerline
       fi
+
     fi
   done
 }
@@ -93,8 +111,10 @@ else
   echo "Author: Marshall Whittaker / oxagast"
   echo
   model=$1
+  logperm=2
   if [ $(echo $model | grep  ".@."| wc -l) -gt 0 ]; then
     startup
   else echo "Incorrect model@hostname syntax"
   fi
 fi
+
