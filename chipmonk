@@ -2,88 +2,49 @@
 
 # # # Chipmonk
 # # # Author: Marshall Whittaker / oxagast
-# # # Version: 1.3
+# # # Version: 2.0a
 # # # NUT (Network UPS Tools) Visual Power Dialog
 
-function playball()
-{
-  trap clean_up EXIT
-  log_ups
-  syslog_popup
-}
+logloc=/var/log/nut
 
 function clean_up()
 {
   echo "Running cleanup, killing upslog..."
   pkill upslog
-}
-
-function set_perms()
-{
-  read -p "Would you like to give /usr/bin/upslog sgid nut? Warning! This is a potential security risk. " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
-  fi
-  if [ $(whoami) == "root" ]; then
-    echo "Fixing permissions for first run..."
-    echo "Setting group permissions on /usr/bin/upslog"
-    chown root:nut /usr/bin/upslog
-    chmod g+s /usr/bin/upslog
-    echo "Setup Complete!"
-    echo "Now run me as your own user!"
-    exit 0
-  else
-    echo "You need to be root to change /usr/bin/upslog perms, sorry!"
-    exit 1
-  fi
-}
-
-function startup()
-{
-  echo "Starting dialogs for $model"
-  echo "Checking upslog permissions"
-  # ls -al /usr/bin/upslog /var/log/ups.log
-  touch /var/log/ups.log
-  chmod g+rw /var/log/ups.log
-  chown root:nut /var/log/ups.log
-  if [[ $(stat -L -c "%A" /usr/bin/upslog | cut -c 7) == "s" ]]; then
-    if [[ $(stat -c "%G" /usr/bin/upslog) == "nut" ]]; then
-      playball
-    fi
-    echo "Sorry, UPS logging facility couldn't be set up properly..."
-    syslog_popup
-  else
-    set_perms
-  fi
+  rm /tmp/ups.status.$pid
 }
 
 function log_ups()
 {
-  if [[ $(stat -c "%A" /var/log/ups.log | cut -c 6) == "w" ]]; then
-    if [[ $(stat -c "%G" /var/log/ups.log) == "nut" ]]; then
-      echo "Starting detailed logger: /var/log/ups.log"
-      upslog -l /var/log/ups.log -s $model -f "%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%" || echo "Logging couldn't be established?"
+  long_format='%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%'
+  state='%VAR ups.status%'
+  if [[ -d $logloc ]]; then
+    touch "$logloc/ups.log"
+    if [[ -f "$logloc/ups.log" ]]; then
+      upslog -l "$logloc/ups.log" -s $model -f "$long_format"
+    else
+      echo "Your $logloc is not writable by you."
     fi
   fi
+  upslog -l /tmp/ups.status.$pid -s $model -f "$state"
 }
 
-function syslog_popup()
+function popup()
 {
-  f="/var/log/syslog"
-  curr=$(<"$f")
+  f="/tmp/ups.status.$pid"
+  powerline=$(<"$f")
   inotifywait -m -e modify "$f" --format "%e" | while read -r event 2>/dev/null; do
-    echo "Monitoring syslog for UPS state changes"
     if [ "$event" == "MODIFY" ]; then
-      prev="$curr"
-      curr=$(cat "$f" | tail -n 1)
-      [ "$curr" == "$prev" ] || if [ $(echo $curr | grep ": " | wc -l) -gt 0 ]; then
-        powerline=$(echo $curr | grep $model | sed -e 's/.*UPS/UPS/')
-        export DISPLAY=:0
-        echod "$powerline" | xargs -I {X} kdialog --passivepopup {X} 30 2>&1 >/dev/null
-        echo $powerline
+      prev="$powerline"
+      powerline=$(cat "$f" | tail -n 1)
+      if [[ "$powerline" != "$prev" ]]; then
+        if [[ $last != $powerline ]]; then
+          if [[ $powerline == "OL" ]]; then kdialog --passivepopup "Notice: UPS $model now on line power." 30; fi
+          if [[ $powerline == "OB" ]]; then kdialog --passivepopup "Warning: UPS $model now on battery power." 30; fi
+          if [[ $powerline == "LB" ]]; then kdialog --passivepopup "Critical: UPS $model now has a low battery!" 30; fi
+        fi
+        last=$powerline
       fi
-
     fi
   done
 }
@@ -92,6 +53,7 @@ echo "# # # Chipmonk # # #"
 echo "NUT (Network UPS Tools) Visual Power Dialogs"
 echo "Author: Marshall Whittaker / oxagast"
 logperm=2
+pid=$$
 if [[ "$#" -gt 1 ]]; then
   echo "You need to specify the NUT configured UPS model@hostname: "
   echo "    ./chipmonk.sh SK600@jerkon"
@@ -100,7 +62,8 @@ fi
 if [[ "$#" -eq 0 ]]; then
   model=$(grep "[MODEL]" -A 1 ~/.chipmonk | tail -n 1 | tr -d '\n')
   if [ $(echo $model | grep ".@." | wc -l) -eq 1 ]; then
-    startup
+    log_ups
+    popup
   fi
 else
   if [[ "$#" -eq 1 ]]; then
@@ -108,7 +71,8 @@ else
     if [ $(echo $model | grep ".@." | wc -l) -eq 1 ]; then
       echo "[MODEL]" >~/.chipmonk
       echo $model >>~/.chipmonk
-      startup
+      log_ups
+      popup
     fi
   fi
   echo "You need to specify the NUT configured UPS model@hostname: "
