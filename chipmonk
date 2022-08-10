@@ -8,6 +8,9 @@
 logloc=/var/log/nut
 
 # The below three functions are for adding user defined scripts!
+# I recommend leaving ther placeholders where they are, they are
+# innoculous, but the script doesn't work correctly without them
+# if nothing else is in the brackets.
 
 function line_power()
 {
