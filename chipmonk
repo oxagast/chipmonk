@@ -50,6 +50,7 @@ function log_ups()
 
 function popup()
 {
+  trap clean_up EXIT
   f="/tmp/ups.status.$pid"
   powerline=$(<"$f")
   inotifywait -m -e modify "$f" --format "%e" | while read -r event 2>/dev/null; do
