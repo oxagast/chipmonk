@@ -5,6 +5,7 @@
 # # # Version: 2.0a
 # # # NUT (Network UPS Tools) Visual Power Dialog
 
+# Here you can change the location where Chipmonk will log to.
 logloc=/var/log/nut
 
 # The below three functions are for adding user defined scripts!
@@ -29,6 +30,7 @@ function low_battery()
 
 # Primary functions start here
 
+# Called by trap on a shutdown signal
 function clean_up()
 {
   echo "Running cleanup, killing upslog..."
@@ -36,6 +38,7 @@ function clean_up()
   rm /tmp/ups.status.$pid
 }
 
+# This is for starting and logging things to our log location (default /var/log/nut/)
 function log_ups()
 {
   long_format='%host% %upshost% %time @Y-@M-@d @H:@M% STA:%VAR ups.status% CRG:%VAR battery.charge% INP:%VAR input.voltage% LOD:%VAR ups.load% TMP:%VAR ups.temperature%'
@@ -51,6 +54,7 @@ function log_ups()
   upslog -l /tmp/ups.status.$pid -s $model -f "$state"
 }
 
+# Calls kdialog on UPS state changes
 function popup()
 {
   trap clean_up EXIT
@@ -72,6 +76,7 @@ function popup()
   done
 }
 
+# startup and config initilization
 echo "# # # Chipmonk # # #"
 echo "NUT (Network UPS Tools) Visual Power Dialogs"
 echo "Author: Marshall Whittaker / oxagast"

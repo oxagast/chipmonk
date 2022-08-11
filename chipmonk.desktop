@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment[en_US]=
+Comment=
+Exec=/usr/local/bin/chipmonk
+GenericName[en_US]=UPS Battery Monitor
+GenericName=UPS Battery Monitor
+Icon=backups-app-symbolic
+MimeType=
+Name[en_US]=chipmonk
+Name=chipmonk
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
