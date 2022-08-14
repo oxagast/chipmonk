@@ -66,9 +66,9 @@ function popup()
       powerline=$(cat "$f" | tail -n 1)
       if [[ "$powerline" != "$prev" ]]; then
         if [[ $last != $powerline ]]; then
-          if [[ $powerline == "OL" ]]; then kdialog --passivepopup "Notice: UPS $model now on line power." 30; line_power; fi
-          if [[ $powerline == "OB" ]]; then kdialog --passivepopup "Warning: UPS $model now on battery power." 30; on_battery; fi
-          if [[ $powerline == "LB" ]]; then kdialog --passivepopup "Critical: UPS $model now has a low battery!" 30; low_battery; fi
+          if [[ $powerline == "OL" ]]; then kdialog --icon "gpm-ups-000-charging" --passivepopup "Notice: UPS $model now on line power." 30; line_power; fi
+          if [[ $powerline == "OB" ]]; then kdialog --icon "upm-ups-040" --passivepopup "Warning: UPS $model now on battery power." 30; on_battery; fi
+          if [[ $powerline == "LB" ]]; then kdialog --icon "gpm-ups-020" --passivepopup "Critical: UPS $model now has a low battery!" 30; low_battery; fi
         fi
         last=$powerline
       fi
