@@ -84,7 +84,7 @@ logperm=2
 pid=$$
 if [[ "$#" -gt 1 ]]; then
   echo "You need to specify the NUT configured UPS model@hostname: "
-  echo "    ./chipmonk.sh SK600@jerkon"
+  echo "    chipmonk SK600@gotham"
   exit 1
 fi
 if [[ "$#" -eq 0 ]]; then
@@ -104,6 +104,6 @@ else
     fi
   fi
   echo "You need to specify the NUT configured UPS model@hostname: "
-  echo "    ./chipmonk.sh SK600@jerkon"
+  echo "    chipmonk SK600@gotham"
   exit 1
 fi
