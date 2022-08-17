@@ -1,7 +1,7 @@
 # chipmonk
 ## NUT (Network UPS Tools) Visual Power Dialogs
 
-![The oxasploits writeup]("https://oxasploits.com/posts/chipmonk-nut-network-ups-tools-ups-power-outage-backup-script/")
+<a href="https://oxasploits.com/posts/chipmonk-nut-network-ups-tools-ups-power-outage-backup-script/">The oxasploits writeup</a>
 
 Chipmonk works with NUT (Network UPS Tools) to monitor UPS events.
 
