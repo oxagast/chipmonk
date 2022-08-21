@@ -13,3 +13,5 @@ of upslog will automatically log to `/var/log/nut/ups.log`, the other is monitor
 internal trigger events on state changes (like power outage, or low battery).
 
 ![Image](https://raw.githubusercontent.com/oxagast/chipmonk/main/demo.png "Demo")
+
+<iframe width="1269" height="714" src="https://www.youtube.com/embed/2XpJRGQN2Kk" title="Chipmonk UPS PoC" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
